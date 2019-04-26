@@ -40,6 +40,8 @@
         </svg>
     </body>
     <script> 
+        var scripts = document.getElementsByTagName("script");
+    console.log(scripts); 
         const load = async () => {
             // Draw Map 
             const zone_data = await d3.json("/home/site/wwwroot/taxi_zones_geo.geojson");
