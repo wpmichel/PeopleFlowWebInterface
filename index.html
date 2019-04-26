@@ -1,0 +1,160 @@
+<html>
+    <head>
+        <tile>CS 5412 - Traffic Balance</tile>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <style> 
+            h1 {
+                text-align: center;
+                font-family: avenir, serif;
+                font-size: 70px; 
+            }
+            .chartLabel{
+                text-align: center;
+                font-family: avenir, serif;
+            }
+            .header {
+                text-align: center;
+                font-family: avenir, serif;
+                font-size: 100px; 
+            }
+            #map{
+                display: block; 
+                margin: auto; 
+            }
+        </style> 
+    </head>
+    <body> 
+        <h1 class='header'> CS 5412 : TrafficBalance </h1>
+        <h1> Objective </h1>
+        <h1> Interactive Map</h1>
+        <svg id='map' height=1000 width=1400>
+            <foreignobject x=0 y=250 height=100 width=350>
+                <!-- TODO: Limit past searches?  -->
+                <input id='dtInput' type='datetime-local'>
+                <br>
+                <text x=0 y=275 class='chartLabel'>Search By Zone: </text>
+                <br>
+                <input id='zoneSearch' type='Search'> 
+                <text id='zoneSearchError' class='chartLabel'></text>
+            </foreignobject>
+        </svg>
+    </body>
+    <script> 
+        const load = async () => {
+            // Draw Map 
+            const zone_data = await d3.json("./taxi_zones_geo.geojson");
+            let zone_dict = {}
+            zone_data.features.forEach(
+                function(d){
+                    var d = d.properties; 
+                    zone_dict[Number(d.location_id)]=zone_dict[d.zone.toLowerCase()]={
+                        'borough':d.borough,
+                        'location_id':d.location_id,
+                        'zone':d.zone
+                    }
+                }
+            )
+            let svg = d3.select('svg#map');
+            svg.append('text')
+                .attr('class', 'chartLabel')
+                .attr('id', 'boroughLabel')
+                .attr('x', 0)
+                .attr('y', 100)
+                .attr('font-size', 40)
+                .text('Borough');  
+            svg.append('text')
+                .attr('class', 'chartLabel')
+                .attr('id', 'zoneLabel')
+                .attr('x', 0)
+                .attr('y', 150)
+                .attr('font-size', 40)
+                .text('Zone');
+            svg.append('text')
+                .attr('class', 'chartLabel')
+                .attr('id', 'locationID')
+                .attr('x', 0)
+                .attr('y', 200)
+                .attr('font-size', 40)
+                .text('Zone #');
+            
+            let nyc_mercator_projection = d3.geoMercator()
+                .fitSize([svg.attr("width"), svg.attr("height")], zone_data);
+            let nyc_mercator_path= d3.geoPath().projection(nyc_mercator_projection); 
+
+            function updateChartLabels(borough, zone, location_id){
+                d3.select('#boroughLabel').text(borough); 
+                d3.select('#zoneLabel').text(zone + ", #" + location_id); 
+                d3.select('#locationID').text(Math.ceil(zone_dict[location_id]['delta'])); 
+            }
+
+            svg.append('g').attr('transform','translate(150,0)')
+                .selectAll("path").data(zone_data.features)
+                .enter()
+                .append( "path" )
+                .attr( "d", nyc_mercator_path )
+                .attr("stroke", "black")
+                .attr("stroke-width", "2px")
+                .attr('fill','white')
+                .attr('class','zone')
+                .attr('id', function(d){return d.properties.location_id;})
+                .on('click', function(d){
+                    updateChartLabels(d.properties.borough, 
+                        d.properties.zone,
+                        d.properties.location_id)});
+                
+            function fetchPopulationDeltas(c)
+            {   
+                let max = -1*Infinity; 
+                let min = Infinity; 
+                // TEMP Implementation 
+                let fetch = {};
+                d3.selectAll('.zone')._groups[0].forEach(function(d){
+                    var result = Math.random()*100;
+                    if(Math.random() < .5){
+                        result = result*-1;
+                    }
+                    if(result < min){min = result;}
+                    if(result > max){max = result;}
+                    fetch[d.id] = result; 
+                }); 
+                fetch['max'] = max; 
+                fetch['min'] = min; 
+                return fetch; 
+            }
+            function refreshPopulations(c)
+            {
+                var fetch = fetchPopulationDeltas(c);  
+                var cpleth_scale = d3.scaleLinear()
+                    .domain([fetch['min'],fetch['max']])
+                    // .range(["blue", "red"])
+                    .range(["hsl(62,100%,90%)", "hsl(228,30%,20%)"])
+                    .interpolate(d3.interpolateHcl)
+                    .clamp(true);
+                d3.selectAll('.zone')
+                  .attr('fill', function(d){ 
+                      var id = Number(d.properties.location_id);
+                      var delta = fetch[id]; 
+                      zone_dict[id]['delta'] = delta; 
+                      zone_dict[zone_dict[id]['zone']] = zone_dict[id]; 
+                      return cpleth_scale(delta);})
+                return c; 
+            }
+            
+            // Build Inputs
+            d3.select('#dtInput')
+              .attr('value', refreshPopulations(new Date().toISOString().slice(0,-5)))
+              .on('change', function(c){refreshPopulations(c);});
+            d3.select('#zoneSearch')
+              .on('change', function(){
+                var s = this.value.toLowerCase();
+                if(s in zone_dict){
+                    var zone = zone_dict[s]; 
+                    updateChartLabels(zone['borough'], zone['zone'], zone['location_id']);
+                }else{
+                    d3.select('#zoneSearchError').text("No zone found, try again!");
+                }
+              });
+        }
+        load(); 
+    </script>
+</html> 
