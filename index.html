@@ -6,7 +6,13 @@
             h1 {
                 text-align: center;
                 font-family: avenir, serif;
-                font-size: 70px; 
+                font-size: 50px; 
+            }
+            p {
+                text-align: center;
+                font-family: avenir, serif;
+                margin-left:25%;
+                margin-right:25%;
             }
             .chartLabel{
                 text-align: center;
@@ -15,7 +21,7 @@
             .header {
                 text-align: center;
                 font-family: avenir, serif;
-                font-size: 100px; 
+                font-size: 70px; 
             }
             #map{
                 display: block; 
@@ -26,7 +32,20 @@
     <body> 
         <h1 class='header'> CS 5412 : TrafficBalance </h1>
         <h1> Objective </h1>
+        <p>TrafficBalance is an application that leverages real-time traffic data to make localized 
+            prediction of traffic and population movements. For the context of this application, we 
+            choose to center on New York City as a proof of concept due to its high degree of taxi 
+            usage, data availability, and need for traffic insights. The application uses a web-based 
+            interface where users can request population and traffic estimates and have the results 
+            displayed on a topographic map of the city. The data is displayed using a heat map as well
+            as individual taxi zone statistics which can be found by clicking on said zone. 
+        </p>
         <h1> Interactive Map</h1>
+        <p> The below map functions as the visualization to TrafficBalance. Each taxi zone is individually 
+            colored to reflect its population count with relative to its neighbors. Clicking on or searching a zone reveals
+            its identification number, the borough it belongs to, and its estimated population. Enter a date 
+            to display the population predictions for that date and time.
+        </p>
         <svg id='map' height=1000 width=1400>
             <foreignobject x=0 y=250 height=100 width=350>
                 <!-- TODO: Limit past searches?  -->
@@ -40,11 +59,9 @@
         </svg>
     </body>
     <script> 
-        var scripts = document.getElementsByTagName("script");
-    console.log(scripts); 
         const load = async () => {
             // Draw Map 
-            const zone_data = await d3.json("taxi_zones_geo.json");
+            const zone_data = await d3.json("./taxi_zones_geo.geojson");
             let zone_dict = {}
             zone_data.features.forEach(
                 function(d){
@@ -87,6 +104,7 @@
                 d3.select('#boroughLabel').text(borough); 
                 d3.select('#zoneLabel').text(zone + ", #" + location_id); 
                 d3.select('#locationID').text(Math.ceil(zone_dict[location_id]['delta'])); 
+                d3.select('#zoneSearchError').text("");
             }
 
             svg.append('g').attr('transform','translate(150,0)')
@@ -152,6 +170,7 @@
                 if(s in zone_dict){
                     var zone = zone_dict[s]; 
                     updateChartLabels(zone['borough'], zone['zone'], zone['location_id']);
+                    d3.select('#zoneSearchError').text("");
                 }else{
                     d3.select('#zoneSearchError').text("No zone found, try again!");
                 }
