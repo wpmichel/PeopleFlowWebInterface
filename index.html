@@ -100,7 +100,7 @@
 
         const load = async () => {
             const Http = new XMLHttpRequest();
-            const url='http://localhost:7071/api/WebRequest';
+            const url='https://pfappservices.azurewebsites.net/api/WebRequest';
             // Draw Map 
             const zone_data = await d3.json("./taxi_zones_geo.json");
             let zone_dict = {}
