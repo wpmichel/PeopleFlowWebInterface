@@ -47,9 +47,17 @@
             to display the population predictions for that date and time.
         </p>
         <svg id='map' height=1000 width=1400>
-            <foreignobject x=0 y=250 height=100 width=350>
+            <foreignobject x=0 y=250 height=150 width=350>
                 <!-- TODO: Limit past searches?  -->
-                <input id='dtInput' type='datetime-local'>
+                <text class='chartLabel'>Date: </text>
+                <input id='dtInput' type='date' min="2017-01-01">
+                <br>
+                <text class='chartLabel'>Hour: </text>
+                <input id='hourInput' type='range' min=0 step=1 max=23>
+                <text id='hourInputValue' class='chartLabel'></text>
+                <br>
+                <text id='submit' class='chartLabel'>Submit Query</text>
+                <br>
                 <br>
                 <text x=0 y=275 class='chartLabel'>Search By Zone: </text>
                 <br>
@@ -59,7 +67,36 @@
         </svg>
     </body>
     <script> 
+        const dateObj = new Date();    
+        if(dateObj.getMonth()+1<10){
+            var month = `0${dateObj.getMonth()+1}`;
+        }else{
+            var month = dateObj.getMonth()+1;
+        }
+    
+        if(dateObj.getDate()<10){
+            var day = `0${dateObj.getDate()}`;
+        }else{
+            var day = dateObj.getDate();
+        }
+
+        // For live app
+        // d3.select('input#dtInput')
+        //     .attr('value', `${dateObj.getFullYear()}-${month}-${day}`)
+        //     .attr('max',`${dateObj.getFullYear()}-${month}-${day}`);
+        
+        d3.select('input#dtInput')
+            .attr('value', `${dateObj.getFullYear()-1}-${month}-${day}`)
+            .attr('max',`${dateObj.getFullYear()-1}-${month}-${day}`);
+        
+        d3.select('input#hourInput')
+            .attr('value', dateObj.getHours())
+            .on('change', function(){d3.select('#hourInputValue').text(this.value);})
+        d3.select('#hourInputValue').text(dateObj.getHours()); 
+
         const load = async () => {
+            const Http = new XMLHttpRequest();
+            const url='https://pfappservices.azurewebsites.net/api/WebRequest';
             // Draw Map 
             const zone_data = await d3.json("./taxi_zones_geo.json");
             let zone_dict = {}
@@ -122,48 +159,38 @@
                         d.properties.zone,
                         d.properties.location_id)});
                 
-            function fetchPopulationDeltas(c)
-            {   
-                let max = -1*Infinity; 
-                let min = Infinity; 
-                // TEMP Implementation 
-                let fetch = {};
-                d3.selectAll('.zone')._groups[0].forEach(function(d){
-                    var result = Math.random()*100;
-                    if(Math.random() < .5){
-                        result = result*-1;
-                    }
-                    if(result < min){min = result;}
-                    if(result > max){max = result;}
-                    fetch[d.id] = result; 
-                }); 
-                fetch['max'] = max; 
-                fetch['min'] = min; 
-                return fetch; 
-            }
-            function refreshPopulations(c)
+            function refreshPopulations(date,hour)
             {
-                var fetch = fetchPopulationDeltas(c);  
-                var cpleth_scale = d3.scaleLinear()
-                    .domain([fetch['min'],fetch['max']])
-                    // .range(["blue", "red"])
-                    .range(["hsl(62,100%,90%)", "hsl(228,30%,20%)"])
-                    .interpolate(d3.interpolateHcl)
-                    .clamp(true);
-                d3.selectAll('.zone')
-                  .attr('fill', function(d){ 
-                      var id = Number(d.properties.location_id);
-                      var delta = fetch[id]; 
-                      zone_dict[id]['delta'] = delta; 
-                      zone_dict[zone_dict[id]['zone']] = zone_dict[id]; 
-                      return cpleth_scale(delta);})
-                return c; 
+
+                Http.open("GET", url+"hour="+hour+"&date="+date,true);
+                Http.send();
+                Http.onreadystatechange=(e)=>{
+                    console.log(Http.responseText); 
+                    var data = json.parse(Http.responseText);
+                    var cpleth_scale = d3.scaleLinear()
+                        .domain(min(data),max(data))
+                        // .range(["blue", "red"])
+                        .range(["hsl(62,100%,90%)", "hsl(228,30%,20%)"])
+                        .interpolate(d3.interpolateHcl)
+                        .clamp(true);
+                    d3.selectAll('.zone')
+                    .attr('fill', function(d){ 
+                        var id = Number(d.properties.location_id);
+                        var delta = data[id]; 
+                        zone_dict[id]['delta'] = delta; 
+                        zone_dict[zone_dict[id]['zone']] = zone_dict[id]; 
+                        return cpleth_scale(delta);})
+                    }
             }
             
             // Build Inputs
-            d3.select('#dtInput')
-              .attr('value', refreshPopulations(new Date().toISOString().slice(0,-5)))
-              .on('change', function(c){refreshPopulations(c);});
+            d3.select('#submit')
+              .on('click', function(){
+                  var date = d3.select('#dtInput').attr('value');
+                  var hour = d3.select('#hourInput').attr('hour');
+                  console.log(date);
+                  refreshPopulations(date, hour);
+                });
             d3.select('#zoneSearch')
               .on('change', function(){
                 var s = this.value.toLowerCase();
