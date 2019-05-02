@@ -63,6 +63,7 @@
                 <br>
                 <input id='zoneSearch' type='Search'> 
                 <text id='zoneSearchError' class='chartLabel'></text>
+                <div class='dateStorage'></div>
             </foreignobject>
         </svg>
     </body>
@@ -87,7 +88,10 @@
         
         d3.select('input#dtInput')
             .attr('value', `${dateObj.getFullYear()-1}-${month}-${day}`)
-            .attr('max',`${dateObj.getFullYear()-1}-${month}-${day}`);
+            .attr('max',`${dateObj.getFullYear()-1}-${month}-${day}`)
+            .on('input', function(){
+                d3.select('.dateStorage').attr('id', this.value);
+            });
         
         d3.select('input#hourInput')
             .attr('value', dateObj.getHours())
@@ -96,7 +100,7 @@
 
         const load = async () => {
             const Http = new XMLHttpRequest();
-            const url='https://pfappservices.azurewebsites.net/api/WebRequest';
+            const url='http://localhost:7071/api/WebRequest';
             // Draw Map 
             const zone_data = await d3.json("./taxi_zones_geo.json");
             let zone_dict = {}
@@ -162,7 +166,7 @@
             function refreshPopulations(date,hour)
             {
 
-                Http.open("GET", url+"hour="+hour+"&date="+date,true);
+                Http.open("GET", url+"?hour="+hour+"&date="+date,true);
                 Http.send();
                 Http.onreadystatechange=(e)=>{
                     console.log(Http.responseText); 
@@ -186,8 +190,8 @@
             // Build Inputs
             d3.select('#submit')
               .on('click', function(){
-                  var date = d3.select('#dtInput').attr('value');
-                  var hour = d3.select('#hourInput').attr('hour');
+                  var date = d3.select('.dateStorage').attr('id');
+                  var hour = d3.select('#hourInput').attr('value');
                   console.log(date);
                   refreshPopulations(date, hour);
                 });
