@@ -92,6 +92,7 @@
             .on('input', function(){
                 d3.select('.dateStorage').attr('id', this.value);
             });
+        d3.select('.dateStorage').attr('id', `${dateObj.getFullYear()-1}-${month}-${day}`)
         
         d3.select('input#hourInput')
             .attr('value', dateObj.getHours())
@@ -100,7 +101,8 @@
 
         const load = async () => {
             const Http = new XMLHttpRequest();
-            const url='http://localhost:7071/api/WebRequest';
+            const url_local='http://localhost:7071/api/WebRequest';
+            const url_live='https://pfappservices.azurewebsites.net/api/WebRequest';
             // Draw Map 
             const zone_data = await d3.json("./taxi_zones_geo.json");
             let zone_dict = {}
@@ -166,13 +168,14 @@
             function refreshPopulations(date,hour)
             {
 
-                Http.open("GET", url+"?hour="+hour+"&date="+date,true);
+                Http.open("GET", url_live+"?hour="+hour+"&date="+date,true);
                 Http.send();
                 Http.onreadystatechange=(e)=>{
                     console.log(Http.responseText); 
-                    var data = json.parse(Http.responseText);
-                    var cpleth_scale = d3.scaleLinear()
-                        .domain(min(data),max(data))
+                    console.log(JSON.parse(Http.responseText)); 
+                    var data = JSON.parse(Http.responseText);
+                    var cpleth_scale = d3.scaleLog()
+                        .domain([Math.min.apply(null, data),Math.max.apply(null, data)])
                         // .range(["blue", "red"])
                         .range(["hsl(62,100%,90%)", "hsl(228,30%,20%)"])
                         .interpolate(d3.interpolateHcl)
@@ -192,7 +195,6 @@
               .on('click', function(){
                   var date = d3.select('.dateStorage').attr('id');
                   var hour = d3.select('#hourInput').attr('value');
-                  console.log(date);
                   refreshPopulations(date, hour);
                 });
             d3.select('#zoneSearch')
@@ -206,7 +208,10 @@
                     d3.select('#zoneSearchError').text("No zone found, try again!");
                 }
               });
-        }
+            var date = d3.select('.dateStorage').attr('id');
+            var hour = d3.select('#hourInput').attr('value');
+            refreshPopulations(date,hour);  
+            }
         load(); 
     </script>
 </html> 
