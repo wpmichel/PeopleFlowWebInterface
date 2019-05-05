@@ -172,23 +172,26 @@
                 Http.open("GET", url_live+"?hour="+hour+"&date="+date,true);
                 Http.send();
                 Http.onreadystatechange=(e)=>{
-                    console.log(Http.responseText); 
-                    console.log(JSON.parse(Http.responseText)); 
                     var data = JSON.parse(Http.responseText);
-                    var cpleth_scale = d3.scaleLog()
-                        .domain([Math.min.apply(null, data),Math.max.apply(null, data)])
-                        // .range(["blue", "red"])
-                        .range(["hsl(62,100%,90%)", "hsl(228,30%,20%)"])
+                    console.log(Http.responseText);
+                    var cpleth_scale = d3.scaleLinear()
+                        .domain(
+                            [Math.min.apply(null, data),
+                            0,
+                            Math.max.apply(null, data)])
+                        .range(["hsl(62,100%,90%)","lightgray","hsl(228,30%,20%)"])
                         .interpolate(d3.interpolateHcl)
                         .clamp(true);
+                    
                     d3.selectAll('.zone')
-                    .attr('fill', function(d){ 
-                        var id = Number(d.properties.location_id);
-                        var delta = data[id]; 
-                        zone_dict[id]['delta'] = delta; 
-                        zone_dict[zone_dict[id]['zone']] = zone_dict[id]; 
-                        return cpleth_scale(delta);})
-                    }
+                        .attr('fill', function(d){ 
+                            var id = Number(d.properties.location_id);
+                            var delta = data[id]; 
+                            zone_dict[id]['delta'] = delta; 
+                            zone_dict[zone_dict[id]['zone']] = zone_dict[id]; 
+                            console.log(cpleth_scale(delta));
+                            return cpleth_scale(delta);})
+                        }
             }
             
             // Build Inputs
