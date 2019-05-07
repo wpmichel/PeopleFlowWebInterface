@@ -64,6 +64,7 @@
                 <input id='zoneSearch' type='Search'> 
                 <text id='zoneSearchError' class='chartLabel'></text>
                 <div class='dateStorage'></div>
+                <div class='hourStorage'></div>
             </foreignobject>
         </svg>
     </body>
@@ -96,9 +97,11 @@
         
         d3.select('input#hourInput')
             .attr('value', dateObj.getHours())
-            .on('change', function(){d3.select('#hourInputValue').text(this.value);})
+            .on('change', function(){
+                d3.select('#hourInputValue').text(this.value);
+                d3.select('.hourStorage').attr('id', this.value);})
         d3.select('#hourInputValue').text(dateObj.getHours()); 
-
+        d3.select('.hourStorage').attr('id', dateObj.getHours())
         const load = async () => {
             const Http = new XMLHttpRequest();
 
@@ -168,17 +171,18 @@
                 
             function refreshPopulations(date,hour)
             {
-
+                console.log(date, hour)
                 Http.open("GET", url_live+"?hour="+hour+"&date="+date,true);
                 Http.send();
                 Http.onreadystatechange=(e)=>{
-                    var data = JSON.parse(Http.responseText);
-                    var cpleth_scale = d3.scaleLinear()
+                    console.log(Http.response)
+                    var data = JSON.parse(String(Http.response));
+                    var cpleth_scale = d3.scalePow()
+                        .exponent(0.2)
                         .domain(
                             [Math.min.apply(null, data),
-                            0,
                             Math.max.apply(null, data)])
-                        .range(["hsl(62,100%,90%)","lightgray","hsl(228,30%,20%)"])
+                        .range(["hsl(62,100%,90%)","hsl(228,30%,20%)"])
                         .interpolate(d3.interpolateHcl)
                         .clamp(true);
                     
@@ -196,7 +200,7 @@
             d3.select('#submit')
               .on('click', function(){
                   var date = d3.select('.dateStorage').attr('id');
-                  var hour = d3.select('#hourInput').attr('value');
+                  var hour = d3.select('.hourStorage').attr('id');
                   refreshPopulations(date, hour);
                 });
             d3.select('#zoneSearch')
@@ -211,7 +215,7 @@
                 }
               });
             var date = d3.select('.dateStorage').attr('id');
-            var hour = d3.select('#hourInput').attr('value');
+            var hour = d3.select('.hourStorage').attr('id');
             
             refreshPopulations(date,hour);  
             }
