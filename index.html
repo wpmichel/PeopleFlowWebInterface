@@ -48,9 +48,8 @@
         </p>
         <svg id='map' height=1000 width=1400>
             <foreignobject x=0 y=250 height=150 width=350>
-                <!-- TODO: Limit past searches?  -->
                 <text class='chartLabel'>Date: </text>
-                <input id='dtInput' type='date' min="2017-01-01">
+                <input id='dtInput' type='date' min="2017-01-01" max="2018-12-31">
                 <br>
                 <text class='chartLabel'>Hour: </text>
                 <input id='hourInput' type='range' min=0 step=1 max=23>
@@ -82,14 +81,9 @@
             var day = dateObj.getDate();
         }
 
-        // For live app
-        // d3.select('input#dtInput')
-        //     .attr('value', `${dateObj.getFullYear()}-${month}-${day}`)
-        //     .attr('max',`${dateObj.getFullYear()}-${month}-${day}`);
-        
         d3.select('input#dtInput')
             .attr('value', `${dateObj.getFullYear()-1}-${month}-${day}`)
-            .attr('max',`${dateObj.getFullYear()-1}-${month}-${day}`)
+            // .attr('max',`${dateObj.getFullYear()-1}-${month}-${day}`)
             .on('input', function(){
                 d3.select('.dateStorage').attr('id', this.value);
             });
@@ -141,7 +135,7 @@
                 .attr('x', 0)
                 .attr('y', 200)
                 .attr('font-size', 40)
-                .text('Zone #');
+                .text('People In');
             
             let nyc_mercator_projection = d3.geoMercator()
                 .fitSize([svg.attr("width"), svg.attr("height")], zone_data);
@@ -171,11 +165,9 @@
                 
             function refreshPopulations(date,hour)
             {
-                console.log(date, hour)
                 Http.open("GET", url_live+"?hour="+hour+"&date="+date,true);
                 Http.send();
                 Http.onreadystatechange=(e)=>{
-                    console.log(Http.response)
                     var data = JSON.parse(String(Http.response));
                     var cpleth_scale = d3.scalePow()
                         .exponent(0.2)
@@ -186,12 +178,17 @@
                         .interpolate(d3.interpolateHcl)
                         .clamp(true);
                     
+                    var curr_label = Number(d3.select('#zoneLabel').text().split('#')[1])
+                    var loc_label = d3.select('#locationID')
                     d3.selectAll('.zone')
                         .attr('fill', function(d){ 
                             var id = Number(d.properties.location_id);
                             var delta = data[id]; 
                             zone_dict[id]['delta'] = delta; 
                             zone_dict[zone_dict[id]['zone']] = zone_dict[id]; 
+                            if(id == curr_label){
+                                d3.select('#locationID').text(delta);
+                            }
                             return cpleth_scale(delta);})
                         }
             }
