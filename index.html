@@ -166,9 +166,10 @@
             function refreshPopulations(date,hour)
             {
                 Http.open("GET", url_live+"?hour="+hour+"&date="+date,true);
+                Http.setRequestHeader('Accept', 'text/plain')
                 Http.send();
                 Http.onreadystatechange=(e)=>{
-                    var data = JSON.parse(String(Http.response));
+                    var data = JSON.parse(Http.response)
                     var cpleth_scale = d3.scalePow()
                         .exponent(0.2)
                         .domain(
