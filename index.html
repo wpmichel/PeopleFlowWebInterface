@@ -173,7 +173,6 @@
                 Http.send();
                 Http.onreadystatechange=(e)=>{
                     var data = JSON.parse(Http.responseText);
-                    console.log(Http.responseText);
                     var cpleth_scale = d3.scaleLinear()
                         .domain(
                             [Math.min.apply(null, data),
@@ -189,7 +188,6 @@
                             var delta = data[id]; 
                             zone_dict[id]['delta'] = delta; 
                             zone_dict[zone_dict[id]['zone']] = zone_dict[id]; 
-                            console.log(cpleth_scale(delta));
                             return cpleth_scale(delta);})
                         }
             }
@@ -214,6 +212,7 @@
               });
             var date = d3.select('.dateStorage').attr('id');
             var hour = d3.select('#hourInput').attr('value');
+            
             refreshPopulations(date,hour);  
             }
         load(); 
