@@ -17,6 +17,7 @@
             .chartLabel{
                 text-align: center;
                 font-family: avenir, serif;
+                margin-top:5px;
             }
             .header {
                 text-align: center;
@@ -27,12 +28,17 @@
                 display: block; 
                 margin: auto; 
             }
+            #submit{
+                border: 1px solid grey;
+                padding-left: 3px;
+                padding-right: 3px;
+            }
         </style> 
     </head>
     <body> 
-        <h1 class='header'> CS 5412 : TrafficBalance </h1>
+        <h1 class='header'> CS 5412 : PeopleFlow </h1>
         <h1> Objective </h1>
-        <p>TrafficBalance is an application that leverages real-time traffic data to make localized 
+        <p>PeopleFlow is an application that leverages real-time traffic data to make localized 
             prediction of traffic and population movements. For the context of this application, we 
             choose to center on New York City as a proof of concept due to its high degree of taxi 
             usage, data availability, and need for traffic insights. The application uses a web-based 
@@ -41,9 +47,9 @@
             as individual taxi zone statistics which can be found by clicking on said zone. 
         </p>
         <h1> Interactive Map</h1>
-        <p> The below map functions as the visualization to TrafficBalance. Each taxi zone is individually 
-            colored to reflect its population count with relative to its neighbors. Clicking on or searching a zone reveals
-            its identification number, the borough it belongs to, and its estimated population. Enter a date 
+        <p> The below map functions as the visualization to PeopleFlow. Each taxi zone is individually 
+            colored to reflect its population count relative to its neighbors. Clicking on or searching a zone reveals
+            its identification number, the borough it belongs to, and its population count. Enter a date 
             to display the population predictions for that date and time.
         </p>
         <svg id='map' height=1000 width=1400>
